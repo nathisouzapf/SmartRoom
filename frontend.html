@@ -7,7 +7,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<!-- ============================================================
+     ►►►► TERRITÓRIO 1: O VISUAL (tudo dentro de <style>) ◄◄◄◄
+     Aqui NÃO acontece ação nenhuma. Eu só DEFINO como tudo
+     vai parecer: cores, caixas, cantos arredondados, sombras.
+     É o "guarda-roupa": as roupas ficam penduradas aqui e o
+     <body> lá embaixo "veste" elas usando class="...".
+     ============================================================ -->
 <style>
+/* ►► AQUI EU GUARDO TODAS AS MINHAS CORES (defino uma vez, uso em todo lugar) */
 :root{
   /* Marca Atitus */
   --brand:#0E5953;
@@ -107,6 +115,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
   border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);
 }
 .pulse-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.pulse-title{font-size:13px;font-weight:600;color:var(--ink-soft)}
+.pulse-meta{font-size:12px;color:var(--muted-2);font-family:'JetBrains Mono'}
 .pulse-bar{display:flex;gap:3px;height:14px;margin-top:12px;border-radius:8px;overflow:hidden}
 .pulse-seg{transition:flex .6s cubic-bezier(.4,0,.2,1)}
 .pulse-seg.livre{background:var(--livre-soft)}
@@ -137,8 +147,10 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .chip .cd{width:8px;height:8px;border-radius:50%}
 .chip:hover{border-color:var(--line-strong)}
 .chip.active{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 6px 14px -6px rgba(14,89,83,.5)}
+.chip.active .cd{box-shadow:0 0 0 2px rgba(255,255,255,.4)}
 
 /* ---------- Grid ---------- */
+/* ►► AQUI EU VISTO A CAIXINHA DE CADA SALA (branca, arredondada, com sombra) */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:14px}
 .room{
   background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
@@ -149,6 +161,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .room.livre::before{background:var(--livre)}
 .room.ocupada::before{background:var(--ocupada)}
 .room.reservada::before{background:var(--reservada)}
+.room:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--line-strong)}
 .room-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .room-code{font-family:'Poppins';font-weight:700;font-size:17px;letter-spacing:-.01em}
 .room-meta{font-size:12px;color:var(--muted);margin-top:2px}
@@ -177,14 +190,100 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .cap{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
 .cap svg{width:14px;height:14px}
 .cta-mini{font-size:12.5px;font-weight:700;color:var(--brand);display:flex;align-items:center;gap:4px}
+.cta-mini svg{width:14px;height:14px;transition:transform .18s}
+.room:hover .cta-mini svg{transform:translateX(3px)}
 .countdown{font-family:'JetBrains Mono';font-weight:700;font-size:12.5px;color:var(--reservada);background:var(--reservada-bg);padding:3px 8px;border-radius:7px}
 
 .empty{text-align:center;padding:50px 20px;color:var(--muted)}
 
+/* ►► Selo da sala conectada ao hardware */
 .room.hw{border-color:#B5AEEA;box-shadow:0 0 0 3px rgba(91,80,214,.13),var(--shadow)}
 .hw-badge{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.02em}
 .hw-badge.live{background:var(--livre-bg);color:#0E7A37;border:1px solid var(--livre-soft)}
 .hw-badge.sim{background:#EDEBFB;color:#4B40C4;border:1px dashed #B5AEEA}
+.hw-banner{font-size:12.5px;font-weight:600;line-height:1.45;border-radius:12px;padding:12px 14px;margin-bottom:18px;display:flex;gap:9px;align-items:flex-start}
+.hw-banner.live{background:var(--livre-bg);color:#0E7A37;border:1px solid var(--livre-soft)}
+.hw-banner.sim{background:#EDEBFB;color:#4B40C4;border:1px dashed #B5AEEA}
+
+/* ---------- Drawer ---------- */
+.overlay{position:fixed;inset:0;background:rgba(13,36,32,.45);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:.25s;z-index:50}
+.overlay.show{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;right:0;height:100%;width:430px;max-width:92vw;z-index:60;
+  background:var(--surface);box-shadow:var(--shadow-lg);
+  transform:translateX(105%);transition:transform .3s cubic-bezier(.32,.72,0,1);
+  display:flex;flex-direction:column;
+}
+.drawer.show{transform:translateX(0)}
+.drawer-head{padding:20px 22px;border-bottom:1px solid var(--line);position:relative;color:#fff}
+.drawer-head.livre{background:linear-gradient(140deg,#15A34A,#0E7A37)}
+.drawer-head.ocupada{background:linear-gradient(140deg,#E23E5C,#B81E3B)}
+.drawer-head.reservada{background:linear-gradient(140deg,#E8A317,#C2820A)}
+.drawer-close{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;display:grid;place-items:center}
+.drawer-close:hover{background:rgba(255,255,255,.32)}
+.drawer-close svg{width:18px;height:18px}
+.d-status{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.9}
+.drawer-head h2{font-family:'Poppins';font-weight:700;font-size:26px;margin:6px 0 3px;letter-spacing:-.02em}
+.d-meta{font-size:13px;opacity:.92}
+.drawer-body{padding:20px 22px;overflow-y:auto;flex:1}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.sec{margin-bottom:26px}
+
+.sensor-row{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid var(--line)}
+.sensor-row:last-child{border-bottom:none}
+.sensor-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none}
+.sensor-ic svg{width:19px;height:19px}
+.sensor-info{flex:1;min-width:0}
+.sensor-name{font-size:13px;font-weight:600;color:var(--ink-soft)}
+.sensor-detail{font-size:12px;color:var(--muted);font-family:'JetBrains Mono';margin-top:2px}
+.sensor-state{font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;white-space:nowrap}
+.st-ok{background:var(--livre-bg);color:#0E7A37}
+.st-warn{background:var(--reservada-bg);color:#9A6B05}
+.st-bad{background:var(--ocupada-bg);color:#B81E3B}
+.wifi-test{margin-top:10px;width:100%;padding:11px;border-radius:11px;border:1px dashed var(--line-strong);background:var(--surface-2);color:var(--brand);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:8px}
+.wifi-test:hover{border-color:var(--brand-bright);background:#EEF8F6}
+.wifi-test svg{width:15px;height:15px}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* reserva */
+.blocks{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.datetime{display:flex;gap:8px;margin-bottom:14px}
+.dt-field{flex:1;min-width:0}
+.dt-field label{display:block;font-size:11px;color:var(--muted);font-weight:600;margin-bottom:5px}
+.dt-field input{width:100%;padding:11px;border:1.5px solid var(--line);border-radius:11px;font-family:inherit;font-size:13px;color:var(--ink);background:var(--surface)}
+.dt-field input:focus{outline:none;border-color:var(--brand-bright)}
+.rules{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.55;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+.rules p{margin:0 0 5px;display:flex;gap:7px}
+.rules p:last-child{margin:0}
+.block{padding:13px 8px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);text-align:center;transition:.16s}
+.block:hover{border-color:var(--brand-bright)}
+.block.sel{border-color:var(--brand);background:#EEF8F6}
+.block .bn{font-family:'Poppins';font-weight:700;font-size:16px;color:var(--ink)}
+.block .bl{font-size:11px;color:var(--muted);margin-top:2px}
+.btn{width:100%;padding:14px;border-radius:13px;font-weight:700;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px;transition:.16s}
+.btn svg{width:17px;height:17px}
+.btn-primary{background:var(--brand);color:#fff;box-shadow:0 10px 22px -10px rgba(14,89,83,.7)}
+.btn-primary:hover{background:var(--brand-dark)}
+.btn-ghost{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:var(--line-strong)}
+.btn:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+
+/* check-in box */
+.checkin{background:var(--reservada-bg);border:1px solid var(--reservada-soft);border-radius:14px;padding:16px}
+.checkin-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.checkin-top svg{width:20px;height:20px;color:#9A6B05;flex:none}
+.checkin-title{font-weight:700;font-size:14px;color:#9A6B05}
+.big-timer{font-family:'JetBrains Mono';font-weight:700;font-size:34px;color:var(--reservada);text-align:center;letter-spacing:.04em;margin:6px 0 4px}
+.checkin-note{font-size:12px;color:#9A6B05;text-align:center;margin-bottom:14px;line-height:1.45}
+.checkin-actions{display:grid;grid-template-columns:1fr;gap:8px}
+.link-demo{display:block;width:100%;text-align:center;margin-top:10px;font-size:12px;color:var(--muted-2);text-decoration:underline}
+
+/* report */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.report-btn{display:flex;align-items:center;gap:9px;padding:13px;border-radius:12px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-weight:600;color:var(--ink-soft);text-align:left;transition:.16s}
+.report-btn svg{width:17px;height:17px;color:var(--ocupada);flex:none}
+.report-btn:hover{border-color:var(--ocupada-soft);background:var(--ocupada-bg)}
 
 /* ---------- Tickets panel ---------- */
 .tickets{margin-top:34px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
@@ -193,13 +292,46 @@ button{font-family:inherit;cursor:pointer;border:none;background:none}
 .tickets-head h3{font-family:'Poppins';font-weight:600;font-size:15px;margin:0;flex:1}
 .t-count{background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
 .ticket{padding:13px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;font-size:13px}
+.ticket:last-child{border-bottom:none}
+.t-ic{width:32px;height:32px;border-radius:9px;background:var(--ocupada-bg);display:grid;place-items:center;flex:none}
+.t-ic svg{width:15px;height:15px;color:var(--ocupada)}
+.t-info{flex:1;min-width:0}
+.t-title{font-weight:600;color:var(--ink-soft)}
+.t-sub{font-size:11.5px;color:var(--muted-2);font-family:'JetBrains Mono';margin-top:1px}
+.t-status{font-size:11px;font-weight:700;color:#9A6B05;background:var(--reservada-bg);padding:4px 9px;border-radius:999px;flex:none}
+.tickets-empty{padding:26px 20px;text-align:center;color:var(--muted-2);font-size:13px}
+
+/* ---------- Toasts ---------- */
+.toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;align-items:center;width:max-content;max-width:92vw}
+.toast{background:var(--ink);color:#fff;padding:13px 18px;border-radius:13px;font-size:13.5px;font-weight:500;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:10px;animation:toastIn .3s cubic-bezier(.32,.72,0,1)}
+.toast svg{width:18px;height:18px;flex:none}
+.toast.ok svg{color:var(--livre-soft)} .toast.warn svg{color:var(--reservada-soft)} .toast.bad svg{color:var(--ocupada-soft)}
+@keyframes toastIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 footer{text-align:center;color:var(--muted-2);font-size:12px;margin-top:40px;line-height:1.7}
 footer b{color:var(--muted)}
+
+@media (max-width:640px){
+  .wrap{padding:0 14px 90px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .brand-sub{display:none}
+  .drawer{width:100%;max-width:100%;top:auto;bottom:0;height:88vh;border-radius:24px 24px 0 0;transform:translateY(105%)}
+  .drawer.show{transform:translateY(0)}
+  .report-grid{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 
+<!-- ============================================================
+     ►►►► TERRITÓRIO 2: A ESTRUTURA FIXA NA TELA (<body>) ◄◄◄◄
+     Aqui eu MONTO as partes que ficam paradas: a barra de cima,
+     o título, a busca e os filtros. As SALAS ainda não estão
+     aqui — elas nascem depois, no <script>, dentro do #grid.
+     ============================================================ -->
+
+<!-- ►► AQUI EU MONTO A BARRA DE CIMA (logo Atitus + relógio "ao vivo") -->
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
@@ -220,6 +352,8 @@ footer b{color:var(--muted)}
 </div>
 
 <div class="wrap">
+
+  <!-- ►► AQUI EU ESCREVO O TÍTULO + O "PULSO DO CAMPUS" (os contadores) -->
   <div class="hero">
     <p class="eyebrow">Campus Passo Fundo · Salas de estudo</p>
     <h1>Encontre uma sala de estudo livre</h1>
@@ -244,10 +378,11 @@ footer b{color:var(--muted)}
     </div>
   </div>
 
+  <!-- ►► AQUI EU CRIO A BUSCA E OS FILTROS (Todas / Livres / Ocupadas...) -->
   <div class="toolbar">
     <label class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-      <input id="search" type="text" placeholder="Buscar sala, bloco ou laboratório…">
+      <input id="search" type="text" placeholder="Buscar sala, bloco ou laboratório…" aria-label="Buscar sala">
     </label>
     <div class="chips" id="chips">
       <button class="chip active" data-f="todas">Todas</button>
@@ -258,8 +393,10 @@ footer b{color:var(--muted)}
     </div>
   </div>
 
+  <!-- ►► AQUI FICA O "BURACO" VAZIO: o <script> vai encher de salas depois -->
   <div class="grid" id="grid"></div>
 
+  <!-- ►► AQUI EU MONTO O PAINEL DE CHAMADOS DA TI -->
   <div class="tickets" id="ticketsPanel">
     <div class="tickets-head">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
@@ -271,39 +408,90 @@ footer b{color:var(--muted)}
 
   <footer>
     <b>SalaLivre</b> · Protótipo acadêmico — sensores PIR, ruído (mic), LDR e ping de Wi‑Fi.<br>
-    Dados lidos via API direta da Raspberry Pi.
+    Dados simulados ao vivo. Pronto para conectar ao Firebase / API da Atitus.
   </footer>
 </div>
 
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+<div class="toasts" id="toasts"></div>
+
 <script>
-const SALA_HARDWARE = 'A1';
+/* ============================================================
+   ►►►► TERRITÓRIO 3: A INTELIGÊNCIA (<script>) ◄◄◄◄
+   Aqui mora TUDO que faz acontecer: cria os dados das salas,
+   desenha na tela, faz a reserva funcionar e fala com o hardware.
+   ============================================================ */
+
+/* ============================================================
+   SalaLivre · Atitus — app do aluno (envia e recebe c/ hardware)
+   ============================================================ */
+
+/* ============================================================
+   👉 SUA PARTE: ENDEREÇO DO RASPBERRY (servidor)
+   - Deixe '' (vazio) quando o app é servido PELO próprio Raspberry
+     (o app pergunta pro mesmo endereço que o abriu — recomendado).
+   - Ou coloque o IP do Raspberry p/ testar de outro PC, ex.:
+     const RASP_URL = 'http://192.168.0.50:5000';
+   Se o Raspberry não responder (ex.: testando sozinha em casa),
+   o app cai sozinho no MODO SIMULAÇÃO.
+   ============================================================ */
+const RASP_URL = '';                 // '' = mesmo servidor que abriu o app
+const SALA_HARDWARE = 'A1';          // qual sala recebe os dados reais do hardware
 let modoHardware = false;
 
+// 🔌 Dados de exemplo (usados no MODO SIMULAÇÃO). No hardware real, os
+//    valores da SALA_HARDWARE vêm do Raspberry (presenca, ruido, wifi).
+// ►►►► CORAÇÃO DO APP: cada { } é UMA sala. A tela inteira é desenhada
+//      a partir desta lista. Mexeu aqui, mudou as salas do app.
 let rooms = [
   {id:'A1', bloco:'Salas A', andar:2, cap:8,  tipo:'Sala de estudo', status:'livre',     ruido:10, wifi:20,  presenca:false, lampada:false, vaziaDesde:null},
   {id:'A2', bloco:'Salas A', andar:2, cap:8,  tipo:'Sala de estudo', status:'ocupada',   ruido:42, wifi:28,  presenca:true,  lampada:true,  vaziaDesde:null},
   {id:'A3', bloco:'Salas A', andar:2, cap:6,  tipo:'Sala de estudo', status:'livre',     ruido:8,  wifi:18,  presenca:false, lampada:false, vaziaDesde:null},
-  {id:'A4', bloco:'Salas A', andar:2, cap:6,  tipo:'Sala de estudo', status:'reservada', ruido:9,  wifi:22,  presenca:false, lampada:false, vaziaDesde:null},
+  {id:'A4', bloco:'Salas A', andar:2, cap:6,  tipo:'Sala de estudo', status:'reservada', ruido:9,  wifi:22,  presenca:false, lampada:false, vaziaDesde:null, reserva:{inicio:Date.now()+2*3600000, fim:Date.now()+3*3600000, estado:'agendada', checkinDeadline:null, ausenteDesde:null}},
   {id:'B1', bloco:'Salas B', andar:1, cap:10, tipo:'Sala de estudo', status:'ocupada',   ruido:55, wifi:30,  presenca:true,  lampada:true,  vaziaDesde:null},
   {id:'B2', bloco:'Salas B', andar:1, cap:8,  tipo:'Sala de estudo', status:'livre',     ruido:12, wifi:24,  presenca:false, lampada:false, vaziaDesde:null},
-  {id:'B3', bloco:'Salas B', andar:1, cap:8,  tipo:'Sala de estudo', status:'livre',     ruido:14, wifi:35,  presenca:false, lampada:true,  vaziaDesde:null},
+  {id:'B3', bloco:'Salas B', andar:1, cap:8,  tipo:'Sala de estudo', status:'livre',     ruido:14, wifi:160, presenca:false, lampada:true,  vaziaDesde:Date.now()-2*60000},
   {id:'B4', bloco:'Salas B', andar:1, cap:6,  tipo:'Sala de estudo', status:'ocupada',   ruido:48, wifi:26,  presenca:true,  lampada:true,  vaziaDesde:null},
-  {id:'B5', bloco:'Salas B', andar:1, cap:6,  tipo:'Sala de estudo', status:'reservada', ruido:8,  wifi:21,  presenca:false, lampada:false, vaziaDesde:null},
+  {id:'B5', bloco:'Salas B', andar:1, cap:6,  tipo:'Sala de estudo', status:'reservada', ruido:8,  wifi:21,  presenca:false, lampada:false, vaziaDesde:null, reserva:{inicio:Date.now()-60000, fim:Date.now()+3540000, estado:'checkin', checkinDeadline:Date.now()+8*60000, ausenteDesde:null}},
   {id:'B6', bloco:'Salas B', andar:1, cap:8,  tipo:'Sala de estudo', status:'livre',     ruido:18, wifi:35,  presenca:false, lampada:false, vaziaDesde:null},
 ];
 
+let tickets = [];
+let activeFilter = 'todas';
+let searchTerm = '';
+let openRoomId = null;
+let selBlock = 60; // minutos
+
+const NO_SHOW_MIN  = 10;  // não apareceu até X min após o horário -> libera
+const AUSENCIA_MIN = 15;  // saiu e não voltou em X min -> libera
+const LUZ_OFF_MIN  = 5;   // ►► A LUZ APAGA após X min sem ninguém na sala (economia)
+const $ = s => document.querySelector(s);
+
+/* ---------- helpers de sensor ---------- */
 const noiseLabel = r => r < 33 ? 'Silenciosa' : r < 66 ? 'Moderada' : 'Barulhenta';
 const noiseColor = r => r < 33 ? 'var(--livre)' : r < 66 ? 'var(--reservada)' : 'var(--ocupada)';
 const wifiLabel  = ms => ms < 50 ? 'Bom' : ms < 120 ? 'Instável' : 'Caindo';
+const wifiClass  = ms => ms < 50 ? 'st-ok' : ms < 120 ? 'st-warn' : 'st-bad';
 const wifiBars   = ms => ms < 50 ? 4 : ms < 120 ? 2 : 1;
+const luzLabel   = l => l === 'ideal' ? 'Ideal' : 'Baixa';
 const statusLabel= s => ({livre:'Livre',ocupada:'Ocupada',reservada:'Reservada'}[s]);
-const $ = s => document.querySelector(s);
 
+/* ---------- card ---------- */
+// ►► AQUI EU PEGO UMA SALA E MONTO O HTML DA CAIXINHA DELA (cor, ruído, wifi...)
 function roomCard(r){
   const bars = wifiBars(r.wifi);
-  let foot = `<span class="cta-mini">${r.status==='livre'?'Reservar':'Ver detalhes'} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>`;
-  
-  return `<div class="room ${r.status} ${r.id===SALA_HARDWARE?'hw':''}" data-room="${r.id}">
+  let foot;
+  const sec = segundosRestantes(r);
+  if(r.reserva && r.reserva.estado==='agendada'){
+    foot = `<span class="countdown">${fmtDateTime(r.reserva.inicio)}</span>`;
+  } else if(sec!=null){
+    foot = `<span class="countdown" data-cd="${r.id}">${fmtDur(sec)}</span>`;
+  } else {
+    foot = `<span class="cta-mini">${r.status==='livre'?'Reservar':'Ver detalhes'}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>`;
+  }
+  return `<button class="room ${r.status} ${r.id===SALA_HARDWARE?'hw':''}" data-room="${r.id}" aria-label="Sala ${r.id}, ${statusLabel(r.status)}">
     <div class="room-head">
       <div>
         <div class="room-code">${r.id}</div>
@@ -330,12 +518,15 @@ function roomCard(r){
       </div>
     </div>
     <div class="room-foot">
-      <span class="cap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>${r.cap} lug.</span>
+      <span class="cap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></svg>${r.cap} lug.</span>
       ${foot}
     </div>
-  </div>`;
+  </button>`;
 }
 
+/* ---------- render grade ---------- */
+// ►► A FAXINEIRA-CHEFE: percorre a lista de salas, monta cada caixinha
+//    e ENCHE aquele buraco vazio #grid. É chamada toda vez que algo muda.
 function render(){
   const grid = $('#grid');
   const filtered = rooms.filter(r=>{
@@ -347,82 +538,471 @@ function render(){
     }
     return true;
   });
-  grid.innerHTML = filtered.length ? filtered.map(roomCard).join('') : '<p class="empty">Nenhuma sala encontrada.</p>';
+  grid.innerHTML = filtered.length
+    ? filtered.map(roomCard).join('')
+    : `<div class="empty" style="grid-column:1/-1"><div style="font-size:34px">🔍</div><p>Nenhuma sala encontrada com esse filtro.</p></div>`;
+  grid.querySelectorAll('[data-room]').forEach(b=>b.onclick=()=>openDrawer(b.dataset.room));
   updateStats();
 }
 
+/* ---------- estatísticas ---------- */
 function updateStats(){
-  const counts = rooms.reduce((acc, r) => { acc[r.status]++; return acc; }, {livre:0, ocupada:0, reservada:0});
-  const total = rooms.length;
-  
-  if($('#kLivre')) $('#kLivre').innerText = counts.livre;
-  if($('#kOcupada')) $('#kOcupada').innerText = counts.ocupada;
-  if($('#kReservada')) $('#kReservada').innerText = counts.reservada;
-  
-  if($('#segLivre')) $('#segLivre').style.flex = counts.livre;
-  if($('#segOcupada')) $('#segOcupada').style.flex = counts.ocupada;
-  if($('#segReservada')) $('#segReservada').style.flex = counts.reservada;
+  const c={livre:0,ocupada:0,reservada:0};
+  rooms.forEach(r=>c[r.status]++);
+  const total=rooms.length;
+  $('#kLivre').textContent=c.livre;
+  $('#kReservada').textContent=c.reservada;
+  $('#kOcupada').textContent=c.ocupada;
+  $('#kChamados').textContent=tickets.length;
+  $('#segLivre').style.flex=c.livre||0.0001;
+  $('#segReservada').style.flex=c.reservada||0.0001;
+  $('#segOcupada').style.flex=c.ocupada||0.0001;
+  $('#tCount').textContent=tickets.length;
 }
 
-// Relógio do sistema
-setInterval(() => {
-  const d = new Date();
-  if($('#clock')) $('#clock').innerText = d.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-}, 1000);
+/* ---------- drawer ---------- */
+// ►► AQUI EU ABRO A GAVETA LATERAL com os detalhes quando você clica numa sala
+function openDrawer(id){
+  openRoomId=id; selBlock=60;
+  drawDrawer();
+  $('#overlay').classList.add('show');
+  $('#drawer').classList.add('show');
+  $('#drawer').setAttribute('aria-hidden','false');
+}
+function closeDrawer(){
+  openRoomId=null;
+  $('#overlay').classList.remove('show');
+  $('#drawer').classList.remove('show');
+  $('#drawer').setAttribute('aria-hidden','true');
+}
+$('#overlay').onclick=closeDrawer;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
 
-// Filtros de Clique
-let activeFilter = 'todas';
-let searchTerm = '';
-document.querySelectorAll('.chip').forEach(btn => {
-  btn.onclick = (e) => {
-    document.querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    activeFilter = btn.dataset.f;
-    render();
+function sensorRow(icon,bg,color,name,detail,state,cls){
+  return `<div class="sensor-row">
+    <div class="sensor-ic" style="background:${bg};color:${color}">${icon}</div>
+    <div class="sensor-info"><div class="sensor-name">${name}</div><div class="sensor-detail">${detail}</div></div>
+    <span class="sensor-state ${cls}">${state}</span>
+  </div>`;
+}
+
+function drawDrawer(){
+  const r=rooms.find(x=>x.id===openRoomId);
+  if(!r) return;
+  const d=$('#drawer');
+
+  // bloco de ação conforme estado
+  let action='';
+  const res = r.reserva;
+  if(!res && r.status==='livre'){
+    // formulário de reserva com dia + horário
+    const hoje=new Date();
+    const dataDef=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+    const prox=new Date(Date.now()+10*60000);
+    const horaDef=`${String(prox.getHours()).padStart(2,'0')}:${String(prox.getMinutes()).padStart(2,'0')}`;
+    action=`<div class="sec">
+      <p class="sec-title">Reservar sala</p>
+      <div class="datetime">
+        <div class="dt-field"><label>Dia</label><input type="date" id="resData" value="${dataDef}"></div>
+        <div class="dt-field"><label>Horário</label><input type="time" id="resHora" value="${horaDef}"></div>
+      </div>
+      <div class="blocks">
+        ${[30,60,120].map(m=>`<button class="block ${selBlock===m?'sel':''}" data-block="${m}">
+          <div class="bn">${m<60?m+'min':(m/60)+'h'}</div><div class="bl">duração</div></button>`).join('')}
+      </div>
+      <button class="btn btn-primary" id="btnReserve">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+        Reservar
+      </button>
+      <div class="rules">
+        <p>⏱️ <span>Se você não chegar até <b>${NO_SHOW_MIN} min</b> depois do horário, a sala é liberada.</span></p>
+        <p>🚪 <span>Se sair e não voltar em <b>${AUSENCIA_MIN} min</b>, a sala também é liberada.</span></p>
+      </div>
+    </div>`;
+  } else if(res && res.estado==='agendada'){
+    action=`<div class="sec">
+      <p class="sec-title">Reserva agendada</p>
+      <div class="checkin">
+        <div class="checkin-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg>
+          <span class="checkin-title">${fmtDateTime(res.inicio)}</span>
+        </div>
+        <p class="checkin-note" style="margin:4px 0 2px">Começa em</p>
+        <div class="big-timer" data-cd="${r.id}" style="font-size:26px">${fmtDur((res.inicio-Date.now())/1000)}</div>
+        <p class="checkin-note">No horário, você terá ${NO_SHOW_MIN} min para chegar.<br>O PIR confirma sua presença sozinho.</p>
+        <div class="checkin-actions"><button class="btn btn-ghost" id="btnCancel">Cancelar reserva</button></div>
+      </div>
+    </div>`;
+  } else if(res && res.estado==='checkin'){
+    action=`<div class="sec">
+      <p class="sec-title">Faça seu check-in</p>
+      <div class="checkin">
+        <div class="checkin-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <span class="checkin-title">Chegou o horário!</span>
+        </div>
+        <div class="big-timer" data-cd="${r.id}">${fmtDur((res.checkinDeadline-Date.now())/1000)}</div>
+        <p class="checkin-note">Chegue na sala antes do tempo acabar.<br>Senão, ela é liberada para outro aluno.</p>
+        <div class="checkin-actions">
+          <button class="btn btn-primary" id="btnCheckin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            Cheguei na sala
+          </button>
+          <button class="btn btn-ghost" id="btnCancel">Cancelar reserva</button>
+        </div>
+        <button class="link-demo" id="btnSimNobody">⏩ Demonstrar: ninguém apareceu</button>
+      </div>
+    </div>`;
+  } else if(res && res.estado==='em_uso' && r.presenca){
+    action=`<div class="sec">
+      <p class="sec-title">Sua reserva — em uso</p>
+      <div class="checkin" style="background:var(--livre-bg);border-color:var(--livre-soft)">
+        <div class="checkin-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#0E7A37"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span class="checkin-title" style="color:#0E7A37">Você está na sala</span>
+        </div>
+        <p class="checkin-note" style="color:#0E7A37">Reservada até <b>${fmtDateTime(res.fim)}</b>.</p>
+        <div class="checkin-actions">
+          <button class="btn btn-ghost" id="btnSair">🚪 Saí um pouco (banheiro/comida)</button>
+          <button class="btn btn-ghost" id="btnCancel">Encerrar reserva</button>
+        </div>
+      </div>
+    </div>`;
+  } else if(res && res.estado==='em_uso' && !r.presenca){
+    action=`<div class="sec">
+      <p class="sec-title">Você saiu da sala</p>
+      <div class="checkin">
+        <div class="checkin-top">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <span class="checkin-title">Volte logo!</span>
+        </div>
+        <div class="big-timer" data-cd="${r.id}">${fmtDur(segundosRestantes(r)??AUSENCIA_MIN*60)}</div>
+        <p class="checkin-note">Se você não voltar a tempo, a sala é liberada.</p>
+        <div class="checkin-actions"><button class="btn btn-primary" id="btnVoltar">↩️ Voltei para a sala</button></div>
+        <button class="link-demo" id="btnSimAusente">⏩ Demonstrar: não voltou a tempo</button>
+      </div>
+    </div>`;
+  } else {
+    action=`<div class="sec">
+      <p class="sec-title">Ocupada agora</p>
+      <div style="background:var(--ocupada-bg);border:1px solid var(--ocupada-soft);border-radius:14px;padding:16px;font-size:13px;color:#B81E3B;display:flex;gap:10px;align-items:center">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        Presença detectada pelo sensor PIR. Avisaremos quando ficar livre.
+      </div></div>`;
+  }
+
+  d.innerHTML=`
+    <div class="drawer-head ${r.status}">
+      <button class="drawer-close" id="drawerClose" aria-label="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div class="d-status">${statusLabel(r.status)}</div>
+      <h2>${r.id}</h2>
+      <div class="d-meta">${r.bloco} · ${r.andar}º andar · ${r.tipo} · ${r.cap} lugares</div>
+    </div>
+    <div class="drawer-body">
+      ${r.id===SALA_HARDWARE ? `<div class="hw-banner ${modoHardware?'live':'sim'}">📡 <span>${modoHardware?'Esta sala está lendo os sensores do <b>hardware real</b> em tempo real (presença, ruído e Wi-Fi).':'Esta é a sala conectada ao <b>hardware</b>. Está em <b>simulação</b> agora — vai ler os dados reais assim que o Firebase for ligado.'}</span></div>` : ''}
+      <div class="sec">
+        <p class="sec-title">Saúde da sala · tempo real</p>
+        ${sensorRow('🔊','var(--livre-bg)','#0E7A37','Nível de ruído',
+          r.ruido+' dB aprox.', noiseLabel(r.ruido),
+          r.ruido<33?'st-ok':r.ruido<66?'st-warn':'st-bad')}
+        ${sensorRow('💡', r.lampada?'var(--reservada-bg)':'var(--livre-bg)', r.lampada?'#9A6B05':'#0E7A37','Iluminação',
+          r.lampada?'Acesa — há alguém na sala':'Apagada — economizando energia', r.lampada?'Acesa':'Apagada',
+          r.lampada?'st-warn':'st-ok')}
+        ${sensorRow('📶','var(--surface-2)','var(--brand)','Sinal de Wi‑Fi',
+          r.wifi+' ms de latência', wifiLabel(r.wifi), wifiClass(r.wifi))}
+        <button class="wifi-test" id="btnWifi">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.5"/><path d="M21 3v6h-6"/></svg>
+          Testar conexão agora
+        </button>
+        <p style="font-size:11.5px;color:var(--muted);margin:12px 0 0;line-height:1.5">💡 A luz apaga automaticamente após <b>${LUZ_OFF_MIN} min</b> sem ninguém na sala (economia de energia).</p>
+      </div>
+      ${action}
+      <div class="sec">
+        <p class="sec-title">Reportar problema à TI</p>
+        <div class="report-grid">
+          <button class="report-btn" data-report="Wi-Fi caiu">📶 Wi‑Fi caiu</button>
+          <button class="report-btn" data-report="Lâmpada queimada">💡 Lâmpada queimada</button>
+          <button class="report-btn" data-report="Ar-condicionado">❄️ Ar‑condicionado</button>
+          <button class="report-btn" data-report="Tomada/projetor">🔌 Tomada / projetor</button>
+        </div>
+      </div>
+    </div>`;
+
+  d.querySelector('#drawerClose').onclick=closeDrawer;
+  const wifiBtn=d.querySelector('#btnWifi'); if(wifiBtn) wifiBtn.onclick=()=>testWifi(r.id);
+  d.querySelectorAll('[data-block]').forEach(b=>b.onclick=()=>{selBlock=+b.dataset.block;drawDrawer()});
+  const rb=d.querySelector('#btnReserve'); if(rb) rb.onclick=()=>reserve(r.id);
+  const ci=d.querySelector('#btnCheckin'); if(ci) ci.onclick=()=>checkin(r.id);
+  const cc=d.querySelector('#btnCancel'); if(cc) cc.onclick=()=>cancelRes(r.id);
+  const sa=d.querySelector('#btnSair');   if(sa) sa.onclick=()=>simSair(r.id);
+  const vo=d.querySelector('#btnVoltar'); if(vo) vo.onclick=()=>simVoltar(r.id);
+  const sn=d.querySelector('#btnSimNobody'); if(sn) sn.onclick=()=>{ if(r.reserva) r.reserva.checkinDeadline=Date.now()+3000; toast('warn','⏳ Acelerando: ninguém apareceu…'); };
+  const sau=d.querySelector('#btnSimAusente'); if(sau) sau.onclick=()=>{ if(r.reserva) r.reserva.ausenteDesde=Date.now()-(AUSENCIA_MIN*60000-3000); toast('warn','⏳ Acelerando: ausência…'); };
+  d.querySelectorAll('[data-report]').forEach(b=>b.onclick=()=>report(r.id,b.dataset.report));
+}
+
+/* ---------- ações de reserva ---------- */
+// ►►►► AS REGRAS DA RESERVA (a parte do dia/hora + liberar em 10min/15min)
+// AQUI EU CRIO a reserva com o dia e horário que o aluno escolheu
+function reserve(id){
+  const r=rooms.find(x=>x.id===id);
+  const dataV=document.querySelector('#resData')?.value;
+  const horaV=document.querySelector('#resHora')?.value;
+  let inicio = (dataV&&horaV) ? new Date(dataV+'T'+horaV).getTime() : Date.now();
+  if(isNaN(inicio)) inicio=Date.now();
+  const now=Date.now();
+  if(inicio < now - 60000){ toast('warn','Esse horário já passou. Escolha um horário futuro.'); return; }
+  const fim = inicio + selBlock*60000;
+  const agora = inicio <= now+1000;
+  r.reserva = {
+    inicio, fim,
+    estado: agora ? 'checkin' : 'agendada',
+    checkinDeadline: agora ? now+NO_SHOW_MIN*60000 : null,
+    ausenteDesde: null
   };
+  r.presenca=false;
+  aplicarStatusReserva(r);
+  enviarAoRasp('/reservar', {sala:id, inicio, fim, estado:r.reserva.estado}); // 📤 envia a reserva ao Raspberry
+  toast('ok', agora
+    ? `✓ ${id} reservada. Faça check-in em ${NO_SHOW_MIN} min.`
+    : `✓ ${id} agendada para ${fmtDateTime(inicio)}.`);
+  render(); drawDrawer();
+}
+function checkin(id){
+  const r=rooms.find(x=>x.id===id);
+  r.presenca=true;
+  if(r.reserva && r.reserva.estado!=='em_uso'){ r.reserva.estado='em_uso'; r.reserva.ausenteDesde=null; }
+  aplicarStatusReserva(r);
+  toast('ok',`✓ Presença confirmada em ${id}. Bom estudo!`);
+  render(); drawDrawer();
+}
+function simSair(id){   // aluno saiu (banheiro/comida) -> começa a contar 15 min
+  const r=rooms.find(x=>x.id===id);
+  r.presenca=false;
+  if(r.reserva && r.reserva.estado==='em_uso') r.reserva.ausenteDesde=Date.now();
+  toast('warn',`Você saiu de ${id}. Volte em ${AUSENCIA_MIN} min ou a sala libera.`);
+  render(); drawDrawer();
+}
+function simVoltar(id){  // voltou a tempo
+  const r=rooms.find(x=>x.id===id);
+  r.presenca=true;
+  if(r.reserva) r.reserva.ausenteDesde=null;
+  toast('ok',`✓ Bem-vindo de volta a ${id}!`);
+  render(); drawDrawer();
+}
+function cancelRes(id){
+  const r=rooms.find(x=>x.id===id);
+  r.reserva=null; r.presenca=false; r.status='livre';
+  enviarAoRasp('/reservar', {sala:id, cancelar:true}); // 📤 cancela no Raspberry
+  toast('warn',`Reserva de ${id} cancelada.`);
+  render(); drawDrawer();
+}
+function liberar(r, motivo, normal){
+  r.reserva=null; r.presenca=false; r.status='livre';
+  enviarAoRasp('/reservar', {sala:r.id, cancelar:true}); // 📤
+  toast(normal?'warn':'bad', `${normal?'✓':'⏱️'} ${r.id} liberada — ${motivo}.`);
+  if(openRoomId===r.id) drawDrawer();
+}
+function testWifi(id){
+  const r=rooms.find(x=>x.id===id);
+  const btn=$('#btnWifi'); if(!btn) return;
+  btn.innerHTML=`<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg> Testando latência…`;
+  btn.disabled=true;
+  setTimeout(()=>{
+    r.wifi=Math.max(8,Math.round(r.wifi*0.6 + Math.random()*60)); // 🔌 ping real aqui
+    toast(r.wifi<50?'ok':r.wifi<120?'warn':'bad',`📶 ${id}: ${r.wifi} ms — ${wifiLabel(r.wifi)}`);
+    drawDrawer(); render();
+  },1100);
+}
+function report(id,tipo){
+  const r=rooms.find(x=>x.id===id);
+  if(tipo==='Wi-Fi caiu') r.wifi=Math.max(r.wifi,180);
+  tickets.unshift({sala:id,tipo,hora:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})});
+  enviarAoRasp('/chamado', {sala:id, tipo, hora:Date.now()}); // 📤 envia o chamado ao Raspberry
+  toast('ok',`✓ Chamado enviado à TI: ${tipo} · ${id}`);
+  renderTickets(); render(); drawDrawer();
+}
+
+/* ---------- tickets ---------- */
+function renderTickets(){
+  const list=$('#ticketsList');
+  list.innerHTML = tickets.length
+    ? tickets.map(t=>`<div class="ticket">
+        <div class="t-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+        <div class="t-info"><div class="t-title">${t.tipo}</div><div class="t-sub">Sala ${t.sala} · aberto ${t.hora}</div></div>
+        <span class="t-status">Pendente</span></div>`).join('')
+    : `<div class="tickets-empty">Nenhum chamado aberto. Tudo funcionando ✨</div>`;
+  updateStats();
+}
+
+/* ---------- toasts ---------- */
+function toast(type,msg){
+  const ic={ok:'<path d="M20 6 9 17l-5-5"/>',warn:'<path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/>',bad:'<circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/>'}[type];
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">${ic}</svg>${msg}`;
+  $('#toasts').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(10px)';el.style.transition='.3s';setTimeout(()=>el.remove(),300)},3200);
+}
+
+/* ---------- tempo ---------- */
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const fmtDur = s => { s=Math.max(0,Math.ceil(s));
+  if(s>=3600){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return `${h}h ${m}min`;}
+  return fmt(s); };
+const fmtDateTime = ts => { const d=new Date(ts);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} às ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+
+// estado da reserva -> status visível da sala
+function aplicarStatusReserva(r){
+  if(!r.reserva) return;
+  r.status = r.reserva.estado==='em_uso' ? 'ocupada' : 'reservada';
+}
+// quantos segundos faltam no contador relevante do estado atual
+function segundosRestantes(r){
+  const res=r.reserva; if(!res) return null; const now=Date.now();
+  if(res.estado==='agendada')  return (res.inicio-now)/1000;
+  if(res.estado==='checkin')   return (res.checkinDeadline-now)/1000;
+  if(res.estado==='em_uso' && !r.presenca && res.ausenteDesde)
+    return (res.ausenteDesde+AUSENCIA_MIN*60000-now)/1000;
+  return null;
+}
+
+function tickClock(){
+  $('#clock').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+// máquina de estados das reservas (agendamento + regras de liberação)
+// ►► O DESPERTADOR: roda a cada 1 segundo e vigia os tempos.
+//    Já passou 10 min e ninguém chegou? Saiu e não voltou em 15 min? Libera.
+function tickReservas(){
+  const now=Date.now();
+  let changed=false;
+  rooms.forEach(r=>{
+    const res=r.reserva; if(!res) return;
+    let transicao=false;
+
+    // 1) chegou o horário -> abre janela de check-in (10 min)
+    if(res.estado==='agendada' && now>=res.inicio){
+      res.estado='checkin'; res.checkinDeadline=res.inicio+NO_SHOW_MIN*60000;
+      transicao=true; toast('warn',`⏰ ${r.id}: chegou o horário. Check-in em ${NO_SHOW_MIN} min.`);
+    }
+    // 2) janela de check-in: detectou presença vira "em uso"; senão libera (no-show)
+    if(res.estado==='checkin'){
+      if(r.presenca){ res.estado='em_uso'; res.ausenteDesde=null; transicao=true; toast('ok',`✓ Check-in em ${r.id}.`); }
+      else if(now>=res.checkinDeadline){ liberar(r,'ninguém apareceu'); changed=true; return; }
+    }
+    // 3) em uso: se sair e não voltar em 15 min, libera; ao fim do bloco, encerra
+    else if(res.estado==='em_uso'){
+      if(!r.presenca){
+        if(!res.ausenteDesde) res.ausenteDesde=now;
+        else if(now-res.ausenteDesde>=AUSENCIA_MIN*60000){ liberar(r,'ausência de mais de '+AUSENCIA_MIN+' min'); changed=true; return; }
+      } else res.ausenteDesde=null;
+      if(now>=res.fim){ liberar(r,'reserva encerrada',true); changed=true; return; }
+    }
+
+    aplicarStatusReserva(r);
+    const sec=segundosRestantes(r);
+    if(sec!=null) document.querySelectorAll(`[data-cd="${r.id}"]`).forEach(e=>e.textContent=fmtDur(sec));
+    if(transicao){ changed=true; if(openRoomId===r.id) drawDrawer(); }
+  });
+  if(changed) render();
+}
+
+// 🔌 simulação de sensores ao vivo (trocar por listener do Firebase)
+function tickSensors(){
+  rooms.forEach(r=>{
+    if(modoHardware && r.id===SALA_HARDWARE) return; // dados reais vêm do Firebase
+    if(r.reserva) return; // sala com reserva é controlada pela lógica de reserva
+    // ruído oscila conforme ocupação
+    const target = r.status==='ocupada' ? (r.tipo.includes('Lab')?70:55) : (r.tipo.includes('Box')?8:20);
+    r.ruido = Math.max(2, Math.min(100, Math.round(r.ruido + (target-r.ruido)*0.25 + (Math.random()*16-8))));
+    // wifi oscila
+    r.wifi = Math.max(8, Math.round(r.wifi + (Math.random()*20-10)));
+    // ocupação espontânea ocasional (PIR)
+    if(Math.random()<0.04){
+      if(r.status==='livre'){ r.status='ocupada'; r.presenca=true; }
+      else if(r.status==='ocupada' && Math.random()<0.5){ r.status='livre'; r.presenca=false; }
+    }
+  });
+
+  // ►► LUZ AUTOMÁTICA (todas as salas): acende com presença,
+  //    apaga 5 min depois que a sala fica vazia (economia de energia)
+  rooms.forEach(r=>{
+    if(r.presenca){ r.lampada=true; r.vaziaDesde=null; }
+    else if(r.lampada){
+      if(!r.vaziaDesde) r.vaziaDesde=Date.now();        // marca quando esvaziou
+      else if(Date.now()-r.vaziaDesde >= LUZ_OFF_MIN*60000){ r.lampada=false; r.vaziaDesde=null; }
+    }
+  });
+
+  $('#pulseMeta').textContent='atualizado '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  render();
+  if(openRoomId) drawDrawer();
+}
+
+/* ---------- eventos ---------- */
+$('#search').addEventListener('input',e=>{searchTerm=e.target.value.toLowerCase().trim();render()});
+$('#chips').addEventListener('click',e=>{
+  const b=e.target.closest('.chip'); if(!b) return;
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  b.classList.add('active'); activeFilter=b.dataset.f; render();
 });
 
-if($('#search')) {
-  $('#search').oninput = (e) => {
-    searchTerm = e.target.value.toLowerCase();
-    render();
-  };
+/* ============================================================
+   RASPBERRY — a ponte entre o app e o hardware (sem nuvem)
+   ============================================================ */
+function setModo(live){
+  modoHardware = live;
+  const p = document.querySelector('#modePill');
+  if(p){ p.textContent = live ? 'HARDWARE AO VIVO' : 'MODO SIMULAÇÃO';
+         p.style.color  = live ? '#0E7A37' : '#9A6B05'; }
 }
 
-// ============================================================
-// 🔌 INTEGRAÇÃO COM A RASPBERRY PI BACKEND (VIA FETCH)
-// ============================================================
-function tickSensors() {
-  fetch('http://10.1.24.54:5000/api/sensores')
-    .then(response => response.json())
-    .then(data => {
-      console.log("Dados recebidos da Raspberry:", data);
+// ►►►► A PONTE COM O HARDWARE (a SUA parte: receber e enviar)
+// 📥 RECEBER: pergunta pro Raspberry "como está a sala A1?" a cada 2s
+async function buscarDoRasp(){
+  try{
+    const resp = await fetch(RASP_URL + '/dados/' + SALA_HARDWARE, {cache:'no-store'});
+    if(!resp.ok) throw new Error('sem resposta');
+    const d = await resp.json();          // ex.: {presenca:true, ruido:45, wifi:20}
+    const r = rooms.find(x=>x.id===SALA_HARDWARE); if(!r) return;
+    if(typeof d.presenca==='boolean'){
+      r.presenca = d.presenca;
+      if(r.status!=='reservada') r.status = d.presenca ? 'ocupada' : 'livre';
+    }
+    if(typeof d.ruido==='number') r.ruido = d.ruido;   // sensor de som (0-100)
+    if(typeof d.wifi==='number')  r.wifi  = d.wifi;    // latência em ms
+    if(!modoHardware) setModo(true);                   // achou o Raspberry -> modo real
+    render(); if(openRoomId===r.id) drawDrawer();
+  }catch(e){
+    if(modoHardware) setModo(false);                   // Raspberry sumiu -> volta p/ simulação
+  }
+}
 
-      const modePill = document.getElementById('modePill');
-      if (modePill) {
-        modePill.innerText = data.modo === "Hardware Real" ? "MODO HARDWARE REAL" : "MODO SIMULAÇÃO";
-        modoHardware = (data.modo === "Hardware Real");
-      }
-
-      const salaA1 = rooms.find(r => r.id === SALA_HARDWARE);
-      if (salaA1) {
-        salaA1.lampada = data.luminosidade > 400; 
-        salaA1.presenca = data.presenca === 1;
-        salaA1.status = salaA1.presenca ? 'ocupada' : 'livre';
-        salaA1.ruido = data.ruido * 10; 
-      }
-
-      render();
-    })
-    .catch(err => {
-      console.error("Erro ao buscar dados do backend:", err);
+// 📤 ENVIAR: manda info do app -> Raspberry (reserva, chamado)
+async function enviarAoRasp(rota, data){
+  if(!modoHardware) return;                            // sem hardware, não envia
+  try{
+    await fetch(RASP_URL + rota, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(data)
     });
+  }catch(e){ console.warn('Falha ao enviar p/ Raspberry:', e); }
 }
 
-// Executa a cada 3,5 segundos
-setInterval(tickSensors, 3500);
-tickSensors();
-render();
+/* ---------- boot ---------- */
+// ►►►► A PARTIDA: tudo começa a rodar aqui embaixo.
+//      O setInterval(..., 1000) repete a função a cada 1000ms (1 segundo),
+//      pra sempre — é isso que deixa o relógio andando e os contadores vivos.
+buscarDoRasp();                       // primeira busca já no início
+setInterval(buscarDoRasp, 2000);      // pergunta pro Raspberry a cada 2 segundos
+rooms.forEach(r=>{ if(r.reserva) aplicarStatusReserva(r); });
+render(); renderTickets(); tickClock();
+setInterval(tickClock,1000);
+setInterval(tickReservas,1000);
+setInterval(tickSensors,3500);
 </script>
 </body>
 </html>
