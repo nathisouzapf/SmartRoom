@@ -1,0 +1,128 @@
+import threading
+import time
+from datetime import datetime, timedelta
+import serial
+from flask import Flask, render_template
+from flask_socketio import SocketIO
+
+app = Flask(__name__)
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
+
+# --- 🔌 CONFIGURAÇÃO DA PORTA USB DO MAC ---
+# Verifique na IDE do Arduino o nome exato da sua porta e ajuste se necessário:
+PORTA_ARDUINO = '/dev/cu.usbmodem101'
+
+try:
+    arduino = serial.Serial(PORTA_ARDUINO, 9600, timeout=1)
+    time.sleep(2) # Aguarda o reset da placa
+    print(f"🔌 [SUCESSO] Conectado ao Arduino na porta {PORTA_ARDUINO}!")
+except Exception as e:
+    arduino = None
+    print(f"⚠️ [ERRO] Não foi possível conectar na porta {PORTA_ARDUINO}. Erro: {e}")
+
+# Estado inicial do banco de dados fictício
+salas_estado = {
+    "Sala 01": {
+        "status": "LIVRE", 
+        "usuario": "", 
+        "ra": "", 
+        "horario": ""
+    }
+}
+
+def ler_dados_arduino():
+    print("🤖 Processamento de dados reais do Arduino ativado...")
+    while True:
+        try:
+            status_atual = salas_estado["Sala 01"]["status"]
+            horario_exibicao = salas_estado["Sala 01"]["horario"]
+            
+            # Valores padrão caso a leitura falhe
+            presenca_sensor = 0
+            luminosidade = 500
+            ruido = 30
+
+            # 1. LEITURA DOS DADOS REAIS DO ARDUINO
+            if arduino and arduino.in_waiting > 0:
+                linha = arduino.readline().decode('utf-8', errors='ignore').strip()
+                dados_separados = linha.split(',')
+                
+                if len(dados_separados) == 3:
+                    presenca_sensor = int(dados_separados[0])
+                    luminosidade = int(dados_separados[1])
+                    ruido = int(dados_separados[2])
+
+            # 2. LÓGICA DE DETECÇÃO AUTOMÁTICA (Se não estiver reservada via site)
+            if status_atual != "RESERVADO":
+                if presenca_sensor == 1:
+                    status_atual = "OCUPADO"
+                    agora = datetime.now()
+                    hora_atual_cheia = agora.replace(minute=0, second=0, microsecond=0)
+                    hora_liberacao = hora_atual_cheia + timedelta(hours=1)
+                    horario_exibicao = f"{hora_atual_cheia.strftime('%H:%M')} - {hora_liberacao.strftime('%H:%M')}"
+                else:
+                    status_atual = "LIVRE"
+                    horario_exibicao = ""
+
+            # 3. ENVIA COMANDO DE VOLTA PARA O LED DO ARDUINO
+            if arduino:
+                if status_atual in ["OCUPADO", "RESERVADO"]:
+                    arduino.write(b'1')  # Envia comando para acender o LED físico
+                else:
+                    arduino.write(b'0')  # Envia comando para apagar o LED físico
+
+            # 4. DISPARA TELEMETRIA PARA A PÁGINA WEB
+            socketio.emit('atualizar_dados', {
+                'status': status_atual,
+                'luz': luminosidade,
+                'ruido': ruido,
+                'presenca': presenca_sensor,
+                'usuario': salas_estado["Sala 01"]["usuario"],
+                'horario': horario_exibicao
+            })
+            
+            time.sleep(0.2) # Resposta rápida aos sensores físicos
+        except Exception as e:
+            print(f"Erro no processamento do Arduino: {e}")
+            time.sleep(1)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@socketio.on('efetuar_reserva')
+def tratar_reserva(dados):
+    nome_sala = dados['sala']
+    salas_estado[nome_sala]["status"] = "RESERVADO"
+    salas_estado[nome_sala]["usuario"] = dados['nome']
+    salas_estado[nome_sala]["ra"] = dados['ra']
+    salas_estado[nome_sala]["horario"] = dados['horario']
+    
+    print(f"📌 [SALA RESERVADA VIA WEB] {nome_sala} por {dados['nome']}")
+    
+    socketio.emit('reserva_confirmada_com_sucesso', {
+        'sala': nome_sala,
+        'status': "RESERVADO",
+        'usuario': dados['nome'],
+        'horario': dados['horario']
+    })
+
+@socketio.on('cancelar_reserva')
+def tratar_cancelamento():
+    salas_estado["Sala 01"]["status"] = "LIVRE"
+    salas_estado["Sala 01"]["usuario"] = ""
+    salas_estado["Sala 01"]["ra"] = ""
+    salas_estado["Sala 01"]["horario"] = ""
+    
+    print("🔓 [SALA LIBERADA VIA WEB] Sala 01 foi liberada.")
+    
+    socketio.emit('reserva_cancelada_com_sucesso', {
+        'sala': "Sala 01",
+        'status': "LIVRE"
+    })
+
+if __name__ == '__main__':
+    thread = threading.Thread(target=ler_dados_arduino)
+    thread.daemon = True
+    thread.start()
+    socketio.run(app, host='0.0.0.0', port=5001, debug=False)

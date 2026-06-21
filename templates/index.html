@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atitus Smart Campus - Painel de Controle</title>
+    
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-cyber: #060b19;
+            --panel-glass: rgba(13, 22, 47, 0.7);
+            --neon-blue: #00f0ff;
+            --neon-green: #39ff14;
+            --neon-red: #ff0055;
+            --neon-yellow: #ffea00;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top, #0a1931 0%, var(--bg-cyber) 100%);
+            color: var(--text-main);
+            margin: 0; padding: 20px;
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .logo-atitus { font-size: 28px; font-weight: 800; text-shadow: 0 0 10px var(--neon-blue); margin-bottom: 5px; }
+        .logo-atitus span { color: var(--neon-blue); }
+
+        .grid-salas { display: flex; flex-direction: column; gap: 20px; max-width: 500px; width: 100%; margin-top: 20px; }
+
+        .card-sala {
+            background: var(--panel-glass);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            backdrop-filter: blur(12px); border-radius: 16px; padding: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .sala-fosca { opacity: 0.35; filter: grayscale(30%); }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+        .status-badge {
+            font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 30px;
+            text-transform: uppercase; border: 1px solid transparent;
+        }
+
+        .badge-livre { background: rgba(57, 255, 20, 0.15); color: var(--neon-green); border-color: var(--neon-green); }
+        .badge-ocupado { background: rgba(255, 0, 85, 0.15); color: var(--neon-red); border-color: var(--neon-red); }
+        .badge-reservado { background: rgba(0, 240, 255, 0.15); color: var(--neon-blue); border-color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+
+        .telemetria { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .sensor-box { background: rgba(255, 255, 255, 0.03); padding: 10px; border-radius: 10px; text-align: center; font-size: 14px; }
+        .sensor-box i { display: block; margin-bottom: 5px; font-size: 18px; transition: color 0.3s ease; }
+        
+        .color-good { color: var(--neon-green) !important; filter: drop-shadow(0 0 5px var(--neon-green)); }
+        .color-warning { color: var(--neon-yellow) !important; filter: drop-shadow(0 0 5px var(--neon-yellow)); }
+        .color-danger { color: var(--neon-red) !important; filter: drop-shadow(0 0 5px var(--neon-red)); }
+        
+        .sensor-box small { display: block; font-size: 10px; color: var(--text-muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; }
+
+        .btn-reservar {
+            width: 100%; background: linear-gradient(90deg, #00c6ff, #0072ff);
+            border: none; color: white; padding: 12px; border-radius: 8px;
+            font-weight: 700; margin-top: 15px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        .btn-reservar:disabled { background: #121d3a; color: #475569; cursor: not-allowed; box-shadow: none; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(3, 7, 18, 0.9); backdrop-filter: blur(6px);
+            display: none; justify-content: center; align-items: center; z-index: 10000;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-content { background: #0d162f; padding: 25px; border-radius: 16px; border: 1px solid var(--neon-blue); width: 320px; box-shadow: 0 0 20px rgba(0, 240, 255, 0.3); }
+        .modal-content label { font-size: 11px; color: var(--neon-blue); text-transform: uppercase; display: block; margin-top: 10px;}
+        input, select { width: 100%; padding: 11px; margin: 5px 0 12px 0; border-radius: 6px; border: 1px solid #1e293b; background: #060b19; color: white; box-sizing: border-box; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="logo-atitus">A<span>TITUS</span> SMART CAMPUS</div>
+    <p style="color: var(--neon-blue); margin: 0; font-weight: 600; letter-spacing: 1px;">SANTA TEREZINHA - 4º ANDAR</p>
+
+    <div class="grid-salas">
+        <div class="card-sala" id="card-sala1">
+            <div class="card-header">
+                <span style="font-weight: 800; letter-spacing: 0.5px;">SALA 01 (Sensores)</span>
+                <div id="s1-badge" class="status-badge badge-livre">Livre</div>
+            </div>
+            <div class="telemetria">
+                <div class="sensor-box">
+                    <i class="fa-solid fa-volume-high" id="icon-ruido"></i>
+                    <div id="s1-ruido">--</div>
+                    <small id="desc-ruido">Carregando...</small>
+                </div>
+                <div class="sensor-box">
+                    <i class="fa-solid fa-lightbulb" id="icon-luz"></i>
+                    <div id="s1-luz">--</div>
+                    <small id="desc-luz">Carregando...</small>
+                </div>
+                <div class="sensor-box">
+                    <i class="fa-solid fa-user" id="icon-presenca"></i>
+                    <div id="s1-presenca">Não</div>
+                    <small id="desc-presenca">Status</small>
+                </div>
+            </div>
+            <button class="btn-reservar" id="s1-btn" onclick="abrirModal('Sala 01')">Reservar</button>
+        </div>
+
+        <div class="card-sala sala-fosca">
+            <div class="card-header"><span style="font-weight: 800;">SALA 02</span><div class="status-badge badge-ocupado">Ocupada</div></div>
+            <div class="telemetria">
+                <div class="sensor-box"><i class="fa-solid fa-volume-high"></i><div>65 dB</div><small style="color:#ffea00">Moderado</small></div>
+                <div class="sensor-box"><i class="fa-solid fa-lightbulb"></i><div>520 luz</div><small style="color:#39ff14">Luz Ideal</small></div>
+                <div class="sensor-box"><i class="fa-solid fa-user"></i><div>Sim</div><small>Em Uso</small></div>
+            </div>
+            <button class="btn-reservar" disabled>Ocupada (19:00 às 20:00)</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modalReserva">
+        <div class="modal-content">
+            <h3 id="modalSalaNome" style="margin: 0 0 10px 0; color: #fff; font-size: 18px;">Reservar Sala</h3>
+            <div>
+                <label>Nome do Acadêmico:</label>
+                <input type="text" id="nome" placeholder="Ex: Pedro Silva" required>
+                
+                <label>RA (Registro Acadêmico):</label>
+                <input type="number" id="ra" placeholder="Ex: 1136103" required>
+                
+                <label>Período de Uso (Horas Cheias):</label>
+                <select id="horario">
+                    <option value="19:00 - 20:00">19:00 - 20:00</option>
+                    <option value="20:00 - 21:00">20:00 - 21:00</option>
+                    <option value="21:00 - 22:00">21:00 - 22:00</option>
+                </select>
+                
+                <button type="button" class="btn-reservar" onclick="salvarReserva()">Confirmar Reserva</button>
+                <button type="button" onclick="fecharModal()" style="background:none; border:none; color:var(--text-muted); width:100%; margin-top:15px; cursor:pointer; font-weight:600;">Voltar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sala1EstaReservada = false;
+        let salaSelecionada = "";
+        let horarioOcupadoAgora = "";
+        
+        // Resolve dinamicamente o endereço de comunicação WebSocket local
+        const socket = io(window.location.protocol + '//' + window.location.hostname + ':5001');
+
+        socket.on('atualizar_dados', function(dados) {
+            document.getElementById('s1-ruido').innerText = dados.ruido + " dB";
+            document.getElementById('s1-luz').innerText = dados.luz + " luz";
+
+            //  RUÍDO ===
+            const iconRuido = document.getElementById('icon-ruido');
+            const descRuido = document.getElementById('desc-ruido');
+            if (dados.ruido <= 50) {
+                iconRuido.className = "fa-solid fa-volume-high color-good";
+                descRuido.innerText = "Silencioso";
+                descRuido.style.color = "var(--neon-green)";
+            } else if (dados.ruido <= 70) {
+                iconRuido.className = "fa-solid fa-volume-high color-warning";
+                descRuido.innerText = "Moderado";
+                descRuido.style.color = "var(--neon-yellow)";
+            } else {
+                iconRuido.className = "fa-solid fa-volume-high color-danger";
+                descRuido.innerText = "Barulhento";
+                descRuido.style.color = "var(--neon-red)";
+            }
+
+            // LUMINOSIDADE ===
+            const iconLuz = document.getElementById('icon-luz');
+            const descLuz = document.getElementById('desc-luz');
+            if (dados.luz < 300) {
+                iconLuz.className = "fa-solid fa-lightbulb color-danger";
+                descLuz.innerText = "Escuro";
+                descLuz.style.color = "var(--neon-red)";
+            } else if (dados.luz <= 750) {
+                iconLuz.className = "fa-solid fa-lightbulb color-good";
+                descLuz.innerText = "Luz Ideal";
+                descLuz.style.color = "var(--neon-green)";
+            } else {
+                iconLuz.className = "fa-solid fa-lightbulb color-warning";
+                descLuz.innerText = "Ofuscante";
+                descLuz.style.color = "var(--neon-yellow)";
+            }
+
+            if (sala1EstaReservada) return;
+
+            const badge = document.getElementById('s1-badge');
+            const btn = document.getElementById('s1-btn');
+            const iconPresenca = document.getElementById('icon-presenca');
+            const descPresenca = document.getElementById('desc-presenca');
+
+            if (dados.status === "RESERVADO") {
+                aplicarLayoutReservado(dados.usuario);
+            } else {
+                badge.innerText = dados.status;
+                
+                // O botão principal SEMPRE fica ativo e azul para permitir agendamentos futuros
+                btn.disabled = false;
+                btn.innerText = "Reservar Sala";
+                btn.style.background = "linear-gradient(90deg, #00c6ff, #0072ff)";
+                btn.setAttribute("onclick", "abrirModal('Sala 01')");
+
+                if (dados.status === "OCUPADO") {
+                    badge.className = "status-badge badge-ocupado";
+                    document.getElementById('s1-presenca').innerText = "Sim";
+                    iconPresenca.className = "fa-solid fa-user color-danger";
+                    descPresenca.innerText = "Em Uso";
+                    descPresenca.style.color = "var(--neon-red)";
+                    
+                    // Armazena a string de tempo gerada em tempo real pelo Python
+                    horarioOcupadoAgora = dados.horario;
+                } else {
+                    badge.className = "status-badge badge-livre";
+                    document.getElementById('s1-presenca').innerText = "Não";
+                    iconPresenca.className = "fa-solid fa-user color-good";
+                    descPresenca.innerText = "Vazia";
+                    descPresenca.style.color = "var(--text-muted)";
+                    
+                    horarioOcupadoAgora = ""; 
+                }
+            }
+        });
+
+        function abrirModal(nome) {
+            salaSelecionada = nome;
+            document.getElementById('modalSalaNome').innerText = "Reservar Sala " + nome;
+            
+            const selectHorario = document.getElementById('horario');
+            
+            // Varre as opções e desabilita cirurgicamente apenas o bloco da hora cheia atual ocupada
+            for (let i = 0; i < selectHorario.options.length; i++) {
+                let opcao = selectHorario.options[i];
+                
+                if (horarioOcupadoAgora !== "" && opcao.value === horarioOcupadoAgora) {
+                    opcao.disabled = true;
+                    opcao.text = horarioOcupadoAgora + " (Sala sendo Utilizada)";
+                } else {
+                    opcao.disabled = false;
+                    opcao.text = opcao.value; 
+                }
+            }
+
+            document.getElementById('modalReserva').classList.add('open');
+        }
+
+        function fecharModal() {
+            document.getElementById('modalReserva').classList.remove('open');
+            document.getElementById('nome').value = "";
+            document.getElementById('ra').value = "";
+            const btnConfirmar = document.querySelector(".modal-content .btn-reservar");
+            btnConfirmar.innerText = "Confirmar Reserva";
+            btnConfirmar.disabled = false;
+        }
+
+        function salvarReserva() {
+            const nomeAluno = document.getElementById('nome').value.trim();
+            const raAluno = document.getElementById('ra').value.trim();
+            const horarioSelecionado = document.getElementById('horario').value;
+
+            if (nomeAluno === "" || raAluno === "") {
+                alert("Por favor, preencha todos os campos antes de confirmar!");
+                return;
+            }
+
+            const btnConfirmar = document.querySelector(".modal-content .btn-reservar");
+            btnConfirmar.innerText = "Processando...";
+            btnConfirmar.disabled = true;
+
+            socket.emit('efetuar_reserva', {
+                sala: salaSelecionada,
+                nome: nomeAluno,
+                ra: raAluno,
+                horario: horarioSelecionado
+            });
+        }
+
+        function cancelarReserva() {
+            if (confirm("Deseja realmente liberar a Sala 01?")) {
+                socket.emit('cancelar_reserva');
+            }
+        }
+
+        socket.on('reserva_confirmada_com_sucesso', function(dados) {
+            if (dados.sala === "Sala 01") {
+                sala1EstaReservada = true;
+                aplicarLayoutReservado(dados.usuario);
+                document.getElementById('modalReserva').classList.remove('open');
+                alert("🎯 Excelente! Sala 01 Reservada com sucesso.");
+            }
+        });
+
+        socket.on('reserva_cancelada_com_sucesso', function(dados) {
+            if (dados.sala === "Sala 01") {
+                sala1EstaReservada = false;
+                alert("🔓 Sala 01 liberada! O painel voltou a rodar o simulador.");
+            }
+        });
+
+        function aplicarLayoutReservado(nomeUsuario) {
+            const badge = document.getElementById('s1-badge');
+            badge.innerText = "Reservado";
+            badge.className = "status-badge badge-reservado";
+            document.getElementById('s1-presenca').innerText = "Reservada";
+            
+            document.getElementById('icon-presenca').className = "fa-solid fa-user color-warning";
+            document.getElementById('desc-presenca').innerText = "Reservada";
+            document.getElementById('desc-presenca').style.color = "var(--neon-yellow)";
+
+            const btn = document.getElementById('s1-btn');
+            btn.disabled = false;
+            btn.innerText = "✖ Liberar Sala (Reservado por: " + nomeUsuario + ")";
+            btn.setAttribute("onclick", "cancelarReserva()");
+            btn.style.background = "linear-gradient(90deg, #ff0055, #990033)";
+        }
+    </script>
+</body>
+</html>

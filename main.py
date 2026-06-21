@@ -1,3 +1,5 @@
+# podemos excluir esse
+
 import time
 import platform
 from threading import Thread
