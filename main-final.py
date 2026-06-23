@@ -8,9 +8,8 @@ from flask_socketio import SocketIO
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
 
-# --- 🔌 CONFIGURAÇÃO DA PORTA USB DO MAC ---
-# Verifique na IDE do Arduino o nome exato da sua porta e ajuste se necessário:
-PORTA_ARDUINO = '/dev/cu.usbmodem101'
+# --- 🔌 CONFIGURAÇÃO DA PORTA USB ---
+PORTA_ARDUINO = 'COM3'
 
 try:
     arduino = serial.Serial(PORTA_ARDUINO, 9600, timeout=1)
@@ -30,17 +29,26 @@ salas_estado = {
     }
 }
 
+# Variáveis globais para espelhamento na API JSON
+dados_sensores_globais = {
+    "presenca": 0,
+    "luminosidade": 500,
+    "ruido": 30
+}
+
 def ler_dados_arduino():
+    global dados_sensores_globais
     print("🤖 Processamento de dados reais do Arduino ativado...")
+    
+    # Manter os valores persistentes FORA do loop para evitar que resetem sozinhos
+    presenca_sensor = 0
+    luminosidade = 500
+    ruido = 30
+
     while True:
         try:
             status_atual = salas_estado["Sala 01"]["status"]
             horario_exibicao = salas_estado["Sala 01"]["horario"]
-            
-            # Valores padrão caso a leitura falhe
-            presenca_sensor = 0
-            luminosidade = 500
-            ruido = 30
 
             # 1. LEITURA DOS DADOS REAIS DO ARDUINO
             if arduino and arduino.in_waiting > 0:
@@ -51,6 +59,14 @@ def ler_dados_arduino():
                     presenca_sensor = int(dados_separados[0])
                     luminosidade = int(dados_separados[1])
                     ruido = int(dados_separados[2])
+                    
+                    # PRINT ATIVADO PARA VOCÊ VER OS DADOS NO TERMINAL DO VS CODE:
+                    print(f"📊 [VS CODE] Presença: {presenca_sensor} | Luz: {luminosidade} | Ruído: {ruido} | Status: {status_atual}")
+
+                    # Atualiza o cache global para consulta da API externa
+                    dados_sensores_globais["presenca"] = presenca_sensor
+                    dados_sensores_globais["luminosidade"] = luminosidade
+                    dados_sensores_globais["ruido"] = ruido
 
             # 2. LÓGICA DE DETECÇÃO AUTOMÁTICA (Se não estiver reservada via site)
             if status_atual != "RESERVADO":
@@ -63,15 +79,26 @@ def ler_dados_arduino():
                 else:
                     status_atual = "LIVRE"
                     horario_exibicao = ""
+                
+                # Atualiza o estado global da sala
+                salas_estado["Sala 01"]["status"] = status_atual
+                salas_estado["Sala 01"]["horario"] = horario_exibicao
 
-            # 3. ENVIA COMANDO DE VOLTA PARA O LED DO ARDUINO
+          ## 3. ENVIA COMANDO DE VOLTA PARA O ARDUINO (LED E LCD)
             if arduino:
-                if status_atual in ["OCUPADO", "RESERVADO"]:
-                    arduino.write(b'1')  # Envia comando para acender o LED físico
+                # 🎯 REGRA EXATA: Presença detectada (1) E luminosidade abaixo de 901 (Luz Forte, Ideal ou Fraca)
+                if presenca_sensor == 1 and luminosidade < 901:
+                    arduino.write(b'1')  # Manda comando '1' para acender o LED no pino 8
+                
+                # Mantém a verificação se a sala foi reservada via site para o LCD
+                elif status_atual == "RESERVADO":
+                    arduino.write(b'2')  # Escreve RESERVADA no LCD
+                
+                # Se estiver no Escuro Total (>= 901) ou se não houver presença (0), o LED desliga
                 else:
-                    arduino.write(b'0')  # Envia comando para apagar o LED físico
+                    arduino.write(b'0')  # Manda comando '0' para apagar o LED
 
-            # 4. DISPARA TELEMETRIA PARA A PÁGINA WEB
+            # 4. DISPARA TELEMETRIA ESTÁVEL PARA A PÁGINA WEB
             socketio.emit('atualizar_dados', {
                 'status': status_atual,
                 'luz': luminosidade,
@@ -81,7 +108,7 @@ def ler_dados_arduino():
                 'horario': horario_exibicao
             })
             
-            time.sleep(0.2) # Resposta rápida aos sensores físicos
+            time.sleep(0.2) # Delay estável de leitura
         except Exception as e:
             print(f"Erro no processamento do Arduino: {e}")
             time.sleep(1)
@@ -89,6 +116,18 @@ def ler_dados_arduino():
 @app.route('/')
 def index():
     return render_template('index.html')
+
+# --- 📊 ROTA DA API PARA ACOMPANHAMENTO DE DADOS EM TEMPO REAL ---
+@app.route('/api/sensores')
+def obter_dados_api():
+    return {
+        "status_sala": salas_estado["Sala 01"]["status"],
+        "horario_reserva": salas_estado["Sala 01"]["horario"],
+        "usuario_reserva": salas_estado["Sala 01"]["usuario"],
+        "sensor_presenca": dados_sensores_globais["presenca"],
+        "sensor_luminosidade": dados_sensores_globais["luminosidade"],
+        "sensor_ruido": dados_sensores_globais["ruido"]
+    }
 
 @socketio.on('efetuar_reserva')
 def tratar_reserva(dados):
