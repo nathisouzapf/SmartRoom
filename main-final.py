@@ -1,9 +1,9 @@
-import threading
-import time
-from datetime import datetime, timedelta
-import serial
-from flask import Flask, render_template
-from flask_socketio import SocketIO
+import threading # Biblioteca que aplica múltiplas threads - permite ler o cabo USB sem travar o site
+import time 
+from datetime import datetime, timedelta 
+import serial # Realiza a comunicação entre o Arduino e o Python 
+from flask import Flask, render_template # Framework que disponibiliza o servidor HTTP e serve a interface aos usuários
+from flask_socketio import SocketIO # Permite conexão em tempo real entre web e Python
 
 app = Flask(__name__)
 socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
@@ -19,7 +19,8 @@ except Exception as e:
     arduino = None
     print(f"⚠️ [ERRO] Não foi possível conectar na porta {PORTA_ARDUINO}. Erro: {e}")
 
-# Estado inicial do banco de dados fictício
+# Dicionários que salvam os dados na RAM
+# Gerencia quem reservou a sala
 salas_estado = {
     "Sala 01": {
         "status": "LIVRE", 
@@ -29,7 +30,7 @@ salas_estado = {
     }
 }
 
-# Variáveis globais para espelhamento na API JSON
+# Guarda na RAM a leitura dos pinos do Arduino
 dados_sensores_globais = {
     "presenca": 0,
     "luminosidade": 500,
@@ -60,7 +61,7 @@ def ler_dados_arduino():
                     luminosidade = int(dados_separados[1])
                     ruido = int(dados_separados[2])
                     
-                    # PRINT ATIVADO PARA VOCÊ VER OS DADOS NO TERMINAL DO VS CODE:
+                    # PRINT PARA VER OS DADOS NO TERMINAL DO VS CODE:
                     print(f"📊 [VS CODE] Presença: {presenca_sensor} | Luz: {luminosidade} | Ruído: {ruido} | Status: {status_atual}")
 
                     # Atualiza o cache global para consulta da API externa
@@ -86,7 +87,7 @@ def ler_dados_arduino():
 
           ## 3. ENVIA COMANDO DE VOLTA PARA O ARDUINO (LED E LCD)
             if arduino:
-                # 🎯 REGRA EXATA: Presença detectada (1) E luminosidade abaixo de 901 (Luz Forte, Ideal ou Fraca)
+                # Presença detectada (1) E luminosidade abaixo de 901 (Luz Forte, Ideal ou Fraca)
                 if presenca_sensor == 1 and luminosidade < 901:
                     arduino.write(b'1')  # Manda comando '1' para acender o LED no pino 8
                 
@@ -98,7 +99,7 @@ def ler_dados_arduino():
                 else:
                     arduino.write(b'0')  # Manda comando '0' para apagar o LED
 
-            # 4. DISPARA TELEMETRIA ESTÁVEL PARA A PÁGINA WEB
+            # 4. DISPARA TELEMETRIA ESTÁVEL PARA A PÁGINA WEB A CADA 0.2 SEGUNDOS
             socketio.emit('atualizar_dados', {
                 'status': status_atual,
                 'luz': luminosidade,
